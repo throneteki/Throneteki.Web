@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CrimsonDev.Gameteki.Api" Version="1.0.2" />
+    <PackageReference Include="CrimsonDev.Gameteki.Api" Version="1.0.6" />
     <PackageReference Include="CrimsonDev.Gameteki.StyleCop.Rules" Version="1.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="NLog" Version="4.5.11" />
