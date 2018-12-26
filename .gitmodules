@@ -1,6 +1,6 @@
 [submodule "Throneteki.Data"]
 	path = Throneteki.Data
-	url = git@github.com:throneteki/Throneteki.Data.git
+	url = https://github.com/throneteki/Throneteki.Data.git
 [submodule "Throneteki.Web/ClientApp"]
 	path = Throneteki.Web/ClientApp
-	url = git@github.com:throneteki/throneteki-client.git
+	url = https://github.com/throneteki/throneteki-client.git
