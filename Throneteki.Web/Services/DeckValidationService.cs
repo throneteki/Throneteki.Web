@@ -164,7 +164,7 @@
                 result.AddError("Too few draw cards");
             }
 
-            if (deck.NormalCards.Count(dc => dc.Card.IsPlotCard() && dc.Count == 2) > maxDoublePlots)
+            if (deck.GetNormalCards().Count(dc => dc.Card.IsPlotCard() && dc.Count == 2) > maxDoublePlots)
             {
                 result.AddError($"Maximum allowed number of doubled plots: {maxDoublePlots}");
             }

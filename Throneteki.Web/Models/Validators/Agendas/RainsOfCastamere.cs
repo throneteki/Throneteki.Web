@@ -14,7 +14,7 @@
                 Message = "Rains of Castamere must contain exactly 5 different Scheme plots",
                 Condition = deck =>
                 {
-                    var schemePlots = deck.NormalCards.Where(dc => dc.Card.IsPlotCard() && dc.Card.HasTrait("Scheme"));
+                    var schemePlots = deck.GetNormalCards().Where(dc => dc.Card.IsPlotCard() && dc.Card.HasTrait("Scheme"));
 
                     return schemePlots.Count() == 5 && deck.CountCards(DeckCardType.Normal, card => card.IsPlotCard() && card.HasTrait("Scheme")) == 5;
                 }

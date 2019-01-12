@@ -11,7 +11,7 @@
             Rules.Add(new ValidationRule
             {
                 Message = "The Brotherhood Without Banners cannot include loyal characters",
-                Condition = deck => !deck.NormalCards.Any(dc => dc.Card.IsCharacter() && dc.Card.Loyal)
+                Condition = deck => !deck.GetNormalCards().Any(dc => dc.Card.IsCharacter() && dc.Card.Loyal)
             });
         }
 

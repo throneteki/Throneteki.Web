@@ -10,7 +10,7 @@
             Rules.Add(new ValidationRule
             {
                 Message = "Cannot include cards from more than 1 outside faction",
-                Condition = deck => deck.NormalCards.Count(dc => dc.Card.Faction.Code != deck.Faction.Code && dc.Card.Faction.Code != "neutral") <= 1
+                Condition = deck => deck.GetNormalCards().Count(dc => dc.Card.Faction.Code != deck.Faction.Code && dc.Card.Faction.Code != "neutral") <= 1
             });
         }
     }
