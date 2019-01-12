@@ -3,12 +3,10 @@
     using System.Linq;
     using System.Threading.Tasks;
     using CrimsonDev.Gameteki.Api.Models.Api;
+    using CrimsonDev.Throneteki.Helpers;
     using CrimsonDev.Throneteki.Models.Api.Response;
     using CrimsonDev.Throneteki.Services;
     using Microsoft.AspNetCore.Mvc;
-    using GetCardsResponse = CrimsonDev.Throneteki.Models.Api.Response.GetCardsResponse;
-    using GetFactionsResponse = CrimsonDev.Throneteki.Models.Api.Response.GetFactionsResponse;
-    using GetPacksResponse = CrimsonDev.Throneteki.Models.Api.Response.GetPacksResponse;
 
     [ApiController]
     public class CardController : Controller
@@ -25,7 +23,7 @@
         {
             var cards = await cardService.GetAllCardsAsync();
 
-            return Json(new GetCardsResponse { Success = true, Cards = cards });
+            return Json(new GetCardsResponse { Success = true, Cards = cards.ToDictionary(k => k.Key, v => v.Value.ToApiCard()) });
         }
 
         [Route("api/packs")]

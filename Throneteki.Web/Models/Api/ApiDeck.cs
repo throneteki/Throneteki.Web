@@ -11,13 +11,11 @@
         [Required]
         public string Name { get; set; }
         public string Username { get; set; }
-        public string Agenda { get; set; }
         public DateTime LastUpdated { get; set; }
         [Required]
         public Faction Faction { get; set; }
-        public List<ApiDeckCard> PlotCards { get; set; }
-        public List<ApiDeckCard> DrawCards { get; set; }
-        public List<string> BannerCards { get; set; }
+        public List<ApiDeckCard> Cards { get; set; }
         public List<ApiDeckCard> RookeryCards { get; set; }
+        public DeckValidationResult ValidationResult { get; set; }
     }
 }

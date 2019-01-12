@@ -37,7 +37,7 @@
                     options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
             }
 
-            services.AddGametekiBase(Configuration);
+            services.AddGameteki(Configuration);
 
             services.AddSpaStaticFiles(configuration =>
             {
@@ -47,6 +47,7 @@
             services.AddTransient<ICardService, CardService>();
             services.AddTransient<IThronetekiDbContext, ThronetekiDbContext>();
             services.AddTransient<IUserService, ThronetekiUserService>();
+            services.AddTransient<IDeckValidationService, DeckValidationService>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -62,18 +63,16 @@
             }
 
             app.UseStaticFiles();
+            app.UseHttpsRedirection();
+            app.UseSpaStaticFiles();
+
             app.UseAuthentication();
-            app.UseHttpsRedirection();
-            app.UseSpaStaticFiles();
-
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
-            app.UseSpaStaticFiles();
-
             app.UseMvc(routes =>
             {
                 routes.MapRoute(name: "default", template: "{controller}/{action=Index}/{id?}");
             });
+
+            app.UseGameteki();
 
             app.UseSpa(spa =>
             {

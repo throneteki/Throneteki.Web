@@ -14,6 +14,7 @@
     using CrimsonDev.Throneteki.Models.Api;
     using CrimsonDev.Throneteki.Models.Api.Request;
     using CrimsonDev.Throneteki.Models.Api.Response;
+    using CrimsonDev.Throneteki.Services;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Identity;
     using Microsoft.AspNetCore.Mvc;
@@ -24,11 +25,13 @@
     {
         private readonly IThronetekiDbContext context;
         private readonly UserManager<GametekiUser> userManager;
+        private readonly IDeckValidationService deckValidationService;
 
-        public DeckController(IThronetekiDbContext context, UserManager<GametekiUser> userManager)
+        public DeckController(IThronetekiDbContext context, UserManager<GametekiUser> userManager, IDeckValidationService deckValidationService)
         {
             this.context = context;
             this.userManager = userManager;
+            this.deckValidationService = deckValidationService;
         }
 
         [Authorize]
@@ -38,9 +41,26 @@
         {
             var currentUser = await userManager.FindByNameAsync(User.Identity.Name);
 
-            var decks = await context.Deck.Include(d => d.Agenda).Include(d => d.Faction).Include(d => d.Owner).Include(d => d.DeckCards).ThenInclude(dc => dc.Card).Where(d => d.OwnerId == currentUser.Id).ToListAsync();
+            var decks = await context.Deck
+                .Include(d => d.Faction)
+                .Include(d => d.Owner)
+                .Include(d => d.DeckCards)
+                .ThenInclude(dc => dc.Card)
+                .ThenInclude(c => c.Faction)
+                .Include("DeckCards.Card.Pack")
+                .Where(d => d.OwnerId == currentUser.Id).ToListAsync();
 
-            return Json(new GetDecksResponse { Success = true, Decks = decks.Select(d => d.ToApiDeck()).ToList() });
+            var apiDecks = new List<ApiDeck>();
+            foreach (var deck in decks)
+            {
+                var apiDeck = deck.ToApiDeck();
+
+                apiDeck.ValidationResult = await deckValidationService.ValidateDeckAsync(deck);
+
+                apiDecks.Add(apiDeck);
+            }
+
+            return Json(new GetDecksResponse { Success = true, Decks = apiDecks });
         }
 
         [Authorize]
@@ -50,7 +70,7 @@
         {
             var currentUser = await userManager.FindByNameAsync(User.Identity.Name);
 
-            var deck = await context.Deck.Include(d => d.Agenda).Include(d => d.Faction).Include(d => d.Owner).Include(d => d.DeckCards).ThenInclude(dc => dc.Card).SingleOrDefaultAsync(d => d.Id == deckId);
+            var deck = await context.Deck.Include(d => d.Faction).Include(d => d.Owner).Include(d => d.DeckCards).ThenInclude(dc => dc.Card).SingleOrDefaultAsync(d => d.Id == deckId);
             if (deck == null)
             {
                 return NotFound();
@@ -67,31 +87,9 @@
         [Authorize]
         [HttpPost]
         [Route("api/decks")]
-        public async Task<IActionResult> AddDeck(AddDeckRequest request)
+        public async Task<IActionResult> AddDeck([FromBody]AddDeckRequest request)
         {
-            var cardsByCode = (await context.Card.ToListAsync()).ToDictionary(key => key.Code, value => value);
-
-            var owner = await userManager.FindByNameAsync(User.Identity.Name);
-
-            var newDeck = new Deck
-            {
-                AgendaId = cardsByCode[request.Deck.Agenda].Id,
-                Name = request.Deck.Name,
-                CreatedDate = DateTime.UtcNow,
-                LastModified = DateTime.UtcNow,
-                OwnerId = owner.Id,
-                FactionId = (await context.Faction.SingleOrDefaultAsync(f => f.Code == request.Deck.Faction.Code)).Id,
-                DeckCards = new Collection<DeckCard>()
-            };
-
-            AddDeckCards(newDeck, request.Deck.PlotCards, DeckCardType.Plot, cardsByCode);
-            AddDeckCards(newDeck, request.Deck.DrawCards, DeckCardType.Draw, cardsByCode);
-            AddDeckCards(newDeck, request.Deck.RookeryCards, DeckCardType.Rookery, cardsByCode);
-
-            foreach (var card in request.Deck.BannerCards)
-            {
-                newDeck.DeckCards.Add(new DeckCard { CardId = cardsByCode[card].Id, CardType = DeckCardType.Banner, Count = 1, Deck = newDeck });
-            }
+            var newDeck = await GetDeckFromApiDeckAsync(request.Deck);
 
             context.Deck.Add(newDeck);
 
@@ -105,7 +103,7 @@
         [Route("api/decks/{deckId}")]
         public async Task<IActionResult> UpdateDeck(int deckId, AddDeckRequest request)
         {
-            var deck = await context.Deck.SingleOrDefaultAsync(d => d.Id == deckId);
+            var deck = await context.Deck.Include(d => d.Faction).Include(d => d.DeckCards).SingleOrDefaultAsync(d => d.Id == deckId);
 
             if (deck == null)
             {
@@ -120,13 +118,11 @@
 
             var cardsByCode = (await context.Card.ToListAsync()).ToDictionary(key => key.Code, value => value);
 
-            deck.AgendaId = cardsByCode[request.Deck.Agenda].Id;
             deck.Name = request.Deck.Name;
             deck.LastModified = DateTime.UtcNow;
             deck.FactionId = (await context.Faction.SingleOrDefaultAsync(f => f.Code == request.Deck.Faction.Code)).Id;
 
-            UpdateDeckCards(deck, request.Deck.PlotCards, DeckCardType.Plot, cardsByCode);
-            UpdateDeckCards(deck, request.Deck.DrawCards, DeckCardType.Draw, cardsByCode);
+            UpdateDeckCards(deck, request.Deck.Cards, DeckCardType.Normal, cardsByCode);
             UpdateDeckCards(deck, request.Deck.RookeryCards, DeckCardType.Rookery, cardsByCode);
 
             return this.SuccessResponse();
@@ -162,6 +158,18 @@
             return Json(new DeleteDeckResponse { Success = true, DeckId = deck.Id });
         }
 
+        [Authorize]
+        [HttpPost]
+        [Route("api/decks/validate")]
+        public async Task<IActionResult> ValidateDeck(AddDeckRequest request)
+        {
+            var deck = await GetDeckFromApiDeckAsync(request.Deck);
+
+            var validationResult = await deckValidationService.ValidateDeckAsync(deck);
+
+            return Json(new ValidateDeckResponse { Success = true, Result = validationResult });
+        }
+
         private static void AddDeckCards(Deck newDeck, List<ApiDeckCard> cards, DeckCardType cardType, Dictionary<string, Card> cardsByCode)
         {
             foreach (var card in cards)
@@ -170,6 +178,7 @@
                     new DeckCard
                     {
                         CardId = cardsByCode[card.Code].Id,
+                        Card = cardsByCode[card.Code],
                         CardType = cardType,
                         Count = card.Count,
                         Deck = newDeck
@@ -177,15 +186,38 @@
             }
         }
 
+        private async Task<Deck> GetDeckFromApiDeckAsync(ApiDeck apiDeck)
+        {
+            var cardsByCode = (await context.Card.Include(c => c.Faction).Include(c => c.Pack).ToListAsync()).ToDictionary(key => key.Code, value => value);
+
+            var owner = await userManager.FindByNameAsync(User.Identity.Name);
+            var faction = await context.Faction.SingleOrDefaultAsync(f => f.Code == apiDeck.Faction.Code);
+            var deck = new Deck
+            {
+                Name = apiDeck.Name,
+                CreatedDate = DateTime.UtcNow,
+                LastModified = DateTime.UtcNow,
+                OwnerId = owner.Id,
+                FactionId = faction.Id,
+                Faction = faction,
+                DeckCards = new Collection<DeckCard>()
+            };
+
+            AddDeckCards(deck, apiDeck.Cards, DeckCardType.Normal, cardsByCode);
+            AddDeckCards(deck, apiDeck.RookeryCards, DeckCardType.Rookery, cardsByCode);
+
+            return deck;
+        }
+
         private void UpdateDeckCards(Deck deck, List<ApiDeckCard> cards, DeckCardType cardType, Dictionary<string, Card> cardsByCode)
         {
-            var existingCodes = deck.DeckCards.Select(dc => dc.Card.Code).ToList();
+            var existingCodes = deck.DeckCards.Where(dc => dc.CardType == cardType).Select(dc => dc.Card.Code).ToList();
             var updateCodes = cards.Select(c => c.Code).ToList();
 
             var newCodes = updateCodes.Except(existingCodes);
             var removedCodes = existingCodes.Except(updateCodes);
 
-            var toRemove = deck.DeckCards.Where(dc => removedCodes.Contains(dc.Card.Code));
+            var toRemove = deck.DeckCards.Where(dc => dc.CardType == cardType && removedCodes.Contains(dc.Card.Code)).ToList();
             foreach (var deckCard in toRemove)
             {
                 deck.DeckCards.Remove(deckCard);

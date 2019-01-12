@@ -3,7 +3,7 @@
   <PropertyGroup>
     <UserSecretsId>d57967b1-75a8-4788-b422-e1661f47bb65</UserSecretsId>
     <LangVersion>latest</LangVersion>
-    <TargetFrameworks>netcoreapp2.2</TargetFrameworks>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
@@ -30,8 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CrimsonDev.Gameteki.Api" Version="1.0.0.7" />
-    <PackageReference Include="CrimsonDev.Gameteki.StyleCop.Rules" Version="1.0.0.12" />
+    <PackageReference Include="CrimsonDev.Gameteki.StyleCop.Rules" Version="1.0.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="NLog" Version="4.5.11" />
     <PackageReference Include="NLog.Web.AspNetCore" Version="4.7.0" />
@@ -41,6 +40,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Gameteki.Api\CrimsonDev.Gameteki.Api.csproj" />
     <ProjectReference Include="..\Throneteki.Data\CrimsonDev.Throneteki.Data.csproj" />
   </ItemGroup>
 
