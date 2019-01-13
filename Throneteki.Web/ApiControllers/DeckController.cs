@@ -10,10 +10,9 @@
     using CrimsonDev.Throneteki.Data;
     using CrimsonDev.Throneteki.Data.GameData;
     using CrimsonDev.Throneteki.Data.Models;
+    using CrimsonDev.Throneteki.Data.Models.Api;
+    using CrimsonDev.Throneteki.Data.Models.Validators;
     using CrimsonDev.Throneteki.Helpers;
-    using CrimsonDev.Throneteki.Models.Api;
-    using CrimsonDev.Throneteki.Models.Api.Request;
-    using CrimsonDev.Throneteki.Models.Api.Response;
     using CrimsonDev.Throneteki.Services;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Identity;
@@ -168,6 +167,43 @@
             var validationResult = await deckValidationService.ValidateDeckAsync(deck);
 
             return Json(new ValidateDeckResponse { Success = true, Result = validationResult });
+        }
+
+        [HttpGet]
+        [Route("api/decks/{deckId:int}/validate/{userId:guid}")]
+        public async Task<IActionResult> ValidateDeckForUser(int deckId, string userId)
+        {
+            var deck = await context.Deck
+                .Include(d => d.Faction)
+                .Include(d => d.Owner)
+                .Include(d => d.DeckCards)
+                .ThenInclude(dc => dc.Card)
+                .Include("DeckCards.Card.Faction")
+                .Include("DeckCards.Card.Pack")
+                .SingleOrDefaultAsync(d => d.Id == deckId);
+
+            if (deck == null)
+            {
+                return NotFound();
+            }
+
+            if (deck.OwnerId != userId)
+            {
+                return NotFound();
+            }
+
+            var validationResult = await deckValidationService.ValidateDeckAsync(deck);
+
+            return Json(new ValidateDeckForUserResponse
+            {
+                Success = true,
+                Result = new DeckValidationResultShort
+                {
+                    BasicRules = validationResult.BasicRules,
+                    NoUnreleasedCards = validationResult.NoUnreleasedCards,
+                    FaqJoustRules = validationResult.FaqJoustRules
+                }
+            });
         }
 
         private static void AddDeckCards(Deck newDeck, List<ApiDeckCard> cards, DeckCardType cardType, Dictionary<string, Card> cardsByCode)

@@ -2,7 +2,7 @@
 {
     using System.Threading.Tasks;
     using CrimsonDev.Throneteki.Data.Models;
-    using CrimsonDev.Throneteki.Models;
+    using CrimsonDev.Throneteki.Data.Models.Validators;
 
     public interface IDeckValidationService
     {

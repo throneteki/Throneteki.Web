@@ -1,9 +1,9 @@
 ﻿namespace CrimsonDev.Throneteki
 {
     using System.Diagnostics.CodeAnalysis;
-    using CrimsonDev.Gameteki.Api.Config;
     using CrimsonDev.Gameteki.Api.Helpers;
     using CrimsonDev.Gameteki.Api.Services;
+    using CrimsonDev.Gameteki.Data.Models.Config;
     using CrimsonDev.Throneteki.Data;
     using CrimsonDev.Throneteki.Services;
     using Microsoft.AspNetCore.Builder;

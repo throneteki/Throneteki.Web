@@ -5,8 +5,7 @@
     using System.Linq;
     using CrimsonDev.Throneteki.Data.GameData;
     using CrimsonDev.Throneteki.Data.Models;
-    using CrimsonDev.Throneteki.Models;
-    using CrimsonDev.Throneteki.Models.Api;
+    using CrimsonDev.Throneteki.Data.Models.Api;
 
     public static class ApiExtensions
     {

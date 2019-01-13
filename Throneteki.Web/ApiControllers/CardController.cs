@@ -2,9 +2,9 @@
 {
     using System.Linq;
     using System.Threading.Tasks;
-    using CrimsonDev.Gameteki.Api.Models.Api;
+    using CrimsonDev.Gameteki.Data.Models.Api;
+    using CrimsonDev.Throneteki.Data.Models.Api;
     using CrimsonDev.Throneteki.Helpers;
-    using CrimsonDev.Throneteki.Models.Api.Response;
     using CrimsonDev.Throneteki.Services;
     using Microsoft.AspNetCore.Mvc;
 

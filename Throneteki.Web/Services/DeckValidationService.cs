@@ -8,9 +8,7 @@
     using CrimsonDev.Throneteki.Data.Extensions;
     using CrimsonDev.Throneteki.Data.GameData;
     using CrimsonDev.Throneteki.Data.Models;
-    using CrimsonDev.Throneteki.Models;
-    using CrimsonDev.Throneteki.Models.Validators;
-    using CrimsonDev.Throneteki.Models.Validators.Agendas;
+    using CrimsonDev.Throneteki.Data.Models.Validators;
 
     public class DeckValidationService : IDeckValidationService
     {
@@ -24,7 +22,7 @@
             validators = new List<IDeckValidator>();
             agendaValidators = new Dictionary<string, IDeckValidator>();
 
-            var agendaValidatorTypes = GetTypesWithHelpAttribute(Assembly.GetEntryAssembly());
+            var agendaValidatorTypes = GetTypesWithAgendaAttribute(typeof(IDeckValidator).Assembly);
             foreach (var validatorType in agendaValidatorTypes)
             {
                 var attribute = validatorType.GetCustomAttribute<AgendaValidatorAttribute>();
@@ -102,7 +100,7 @@
             return result;
         }
 
-        private static IEnumerable<Type> GetTypesWithHelpAttribute(Assembly assembly)
+        private static IEnumerable<Type> GetTypesWithAgendaAttribute(Assembly assembly)
         {
             return assembly.GetTypes().Where(type => type.GetCustomAttributes(typeof(AgendaValidatorAttribute), true).Length > 0);
         }

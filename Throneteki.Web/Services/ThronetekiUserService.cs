@@ -1,10 +1,10 @@
 ﻿namespace CrimsonDev.Throneteki.Services
 {
     using System.Threading.Tasks;
-    using CrimsonDev.Gameteki.Api.Config;
     using CrimsonDev.Gameteki.Api.Services;
     using CrimsonDev.Gameteki.Data;
     using CrimsonDev.Gameteki.Data.Models;
+    using CrimsonDev.Gameteki.Data.Models.Config;
     using CrimsonDev.Throneteki.Data.Models;
     using Microsoft.AspNetCore.Identity;
     using Microsoft.AspNetCore.Identity.UI.Services;
