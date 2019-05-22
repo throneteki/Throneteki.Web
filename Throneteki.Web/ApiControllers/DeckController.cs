@@ -18,6 +18,8 @@
     using Microsoft.AspNetCore.Identity;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.EntityFrameworkCore;
+    using Newtonsoft.Json;
+    using StackExchange.Redis;
 
     [ApiController]
     public class DeckController : Controller
@@ -25,12 +27,15 @@
         private readonly IThronetekiDbContext context;
         private readonly UserManager<GametekiUser> userManager;
         private readonly IDeckValidationService deckValidationService;
+        private readonly IDatabase database;
 
-        public DeckController(IThronetekiDbContext context, UserManager<GametekiUser> userManager, IDeckValidationService deckValidationService)
+        public DeckController(IThronetekiDbContext context, UserManager<GametekiUser> userManager, IDeckValidationService deckValidationService, IConnectionMultiplexer redisConnection)
         {
             this.context = context;
             this.userManager = userManager;
             this.deckValidationService = deckValidationService;
+
+            database = redisConnection.GetDatabase();
         }
 
         [Authorize]
@@ -193,6 +198,8 @@
             }
 
             var validationResult = await deckValidationService.ValidateDeckAsync(deck);
+
+            await database.StringSetAsync($"deck:{deck.Id}", JsonConvert.SerializeObject(deck.ToApiDeck()));
 
             return Json(new ValidateDeckForUserResponse
             {

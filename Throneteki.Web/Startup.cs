@@ -11,6 +11,8 @@
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Serialization;
 
     [ExcludeFromCodeCoverage]
     public class Startup
@@ -48,6 +50,7 @@
             services.AddTransient<IThronetekiDbContext, ThronetekiDbContext>();
             services.AddTransient<IUserService, ThronetekiUserService>();
             services.AddTransient<IDeckValidationService, DeckValidationService>();
+            services.AddScoped<RedisManager>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -83,6 +86,18 @@
                     spa.UseProxyToSpaDevelopmentServer("https://localhost:8080");
                 }
             });
+
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            };
+
+            using (var scope = app.ApplicationServices.CreateScope())
+            {
+                var redisManager = scope.ServiceProvider.GetService<RedisManager>();
+                redisManager.PopulateCards().Wait();
+            }
         }
     }
 }
